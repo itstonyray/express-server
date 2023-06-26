@@ -2,21 +2,21 @@
     {
       "id": 1,
       "description": "Buy groceries",
-      "completed": false
+      "isCmpleted": false
     },
     {
       "id": 2,
       "description": "Walk the dog",
-      "completed": true
+      "isCompleted": true
     },
     {
       "id": 3,
       "description": "Do homework",
-      "completed": false
+      "isCompleted": false
     },
     {
         "id": 4,
         "description": "go to gym",
-        "completed": true
+        "isCompleted": true
     }
   ]
