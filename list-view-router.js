@@ -4,7 +4,7 @@ const router = express.Router();
 
 const tasks = require('./tasks.json');
 
-// Middleware to handle parameter validation
+
 const validateParameters = (req, res, next) => {
   const { param1, param2 } = req.params;
   if (!param1 || !param2) {

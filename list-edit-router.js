@@ -1,79 +1,53 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-const tasks = require('./tasks.json');
+// Array of predefined users
+const users = [
+  { username: 'user1', password: 'password1' },
+  { username: 'user2', password: 'password2' }
+];
 
+router.post('/login', (req, res) => {
+  const { username, password } = req.body;
 
-const validatePostRequest = (req, res, next) => {
-  if (req.method === 'POST') {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Empty request body' });
-    }
+ 
+  const user = users.find(user => user.username === username && user.password === password);
 
-    const { description } = req.body;
-    if (!description) {
-      return res.status(400).json({ error: 'Invalid or missing task description' });
-    }
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  next();
-};
+  // Generate JWT token
+  const token = jwt.sign({ username: user.username }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
-
-const validatePutRequest = (req, res, next) => {
-  if (req.method === 'PUT') {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Empty request body' });
-    }
-
-    const { description, isCompleted } = req.body;
-    if (!description && !isCompleted) {
-      return res.status(400).json({ error: 'Invalid or missing task information' });
-    }
-  }
-
-  next();
-};
-
-router.post('/', validatePostRequest, (req, res) => {
-  const { description } = req.body;
-  const newTask = {
-    id: tasks.length + 1,
-    description,
-    completed: false
-  };
-
-  tasks.push(newTask);
-
-  res.status(201).json(newTask);
+  res.json({ token });
 });
 
-router.delete('/:id', (req, res) => {
-  const taskId = parseInt(req.params.id);
-  const taskIndex = tasks.findIndex(task => task.id === taskId);
+// Middleware to protect the routes
+function validateToken(req, res, next) {
+  const Header = req.headers['authorization'];
+  const token = Header && Header.split(' ')[1];
 
-  if (taskIndex === -1) {
-    return res.status(404).json({ error: 'Task not found' });
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  tasks.splice(taskIndex, 1);
+  jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
 
-  res.json({ message: 'Task deleted' });
-});
+   
+    req.user = user;
+    next();
+  });
+}
 
-router.put('/:id', validatePutRequest, (req, res) => {
-  const taskId = parseInt(req.params.id);
-  const { description, completed } = req.body;
-  const taskIndex = tasks.findIndex(task => task.id === taskId);
-
-  if (taskIndex === -1) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-
-  tasks[taskIndex].description = description || tasks[taskIndex].description;
-  tasks[taskIndex].completed = completed || tasks[taskIndex].completed;
-
-  res.json(tasks[taskIndex]);
+// Protected route 
+router.get('/protected', validateToken, (req, res) => {
+  res.json({ message: 'Protected route accessed successfully', user: req.user });
 });
 
 module.exports = router;
