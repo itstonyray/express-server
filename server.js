@@ -1,16 +1,15 @@
 const express = require('express');
-const listViewRouter = require('./list-view-router');
-const listEditRouter = require('./list-edit-router');
+const router = require('./router');
 
 const app = express();
 
 app.use(express.json());
 
-// Authentication middleware
-app.use('/tasks/edit', authenticateToken);
+app.get('/', (req, res) => {
+  res.send("express server")
+});
 
-app.use('/tasks/view', listViewRouter);
-app.use('/tasks/edit', listEditRouter);
+app.use('/api/tasks', router);
 
 app.listen(8080, () => {
   console.log(`Server is running on port 8080`);
